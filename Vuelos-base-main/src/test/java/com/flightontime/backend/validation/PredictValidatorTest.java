@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 class PredictValidatorTest {
 
@@ -39,6 +41,36 @@ class PredictValidatorTest {
         assertDoesNotThrow(
                 () -> validator.validAreoline(request),
                 "No debería lanzar excepción cuando la aerolínea existe en el catálogo"
+        );
+    }
+
+    @Test
+    void shouldFailWhenDateIsInThePast() {
+        LocalDateTime pastDate = LocalDateTime.now().minusMinutes(1);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> validator.validateDepartureDateIsNotPast(pastDate)
+        );
+
+        assertEquals("La fecha de partida debe ser futura", ex.getMessage());
+    }
+
+    @Test
+    void shouldPassWhenDateIsNow() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+
+        assertDoesNotThrow(
+                () -> validator.validateDepartureDateIsNotPast(now)
+        );
+    }
+
+    @Test
+    void shouldPassWhenDateIsFuture() {
+        LocalDateTime futureDate = LocalDateTime.now().plusMinutes(1);
+
+        assertDoesNotThrow(
+                () -> validator.validateDepartureDateIsNotPast(futureDate)
         );
     }
 }

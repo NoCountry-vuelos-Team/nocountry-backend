@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+
 
 @Component
 @RequiredArgsConstructor
@@ -64,6 +66,29 @@ public class PredictValidator {
         } catch (IOException e) {
             throw new IllegalStateException(
                     "No se pudo leer el catálogo de aerolíneas (catalog/airlines.csv)", e);
+        }
+    }
+
+    /**
+     * Valida que la fecha de partida no esté en el pasado.
+     *
+     * Reglas:
+     * - fechas anteriores a now() → error
+     * - fecha igual a now() → permitido
+     * - fechas futuras → permitido
+     */
+    public void validateDepartureDateIsNotPast(LocalDateTime fechaPartida) {
+        if (fechaPartida == null) {
+            throw new IllegalArgumentException("La fecha de partida es obligatoria");
+        }
+
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        LocalDateTime departure = fechaPartida.withNano(0);
+
+        if (departure.isBefore(now)) {
+            throw new IllegalArgumentException(
+                    "La fecha de partida debe ser futura"
+            );
         }
     }
 }
