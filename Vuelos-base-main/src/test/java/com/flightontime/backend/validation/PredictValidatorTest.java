@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.springframework.web.server.ResponseStatusException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class PredictValidatorTest {
 
     private final PredictValidator validator = new PredictValidator();
@@ -41,6 +44,27 @@ class PredictValidatorTest {
                 "No debería lanzar excepción cuando la aerolínea existe en el catálogo"
         );
     }
+
+    @Test
+    void shouldFailWhenOriginEqualsDestination() {
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> validator.validateOriginAndDestinationAreDifferent("EZE", "eze")
+        );
+
+        assertEquals(
+                "El origen y el destino no pueden ser iguales",
+                exception.getReason()
+        );
+    }
+
+    @Test
+    void shouldPassWhenOriginAndDestinationAreDifferent() {
+        assertDoesNotThrow(
+                () -> validator.validateOriginAndDestinationAreDifferent("EZE", "MDZ")
+        );
+    }
+
 }
 
 

@@ -224,6 +224,8 @@ El sistema incluye las siguientes validaciones:
    - Origen/Destino: 3 caracteres, solo letras (códigos IATA)
    - Fecha: Formato `yyyy-MM-dd HH:mm:ss`
    - Distancia: Número positivo con máximo 7 dígitos enteros y 2 decimales
+3. **Validación de Origen y Destino**: Verifica que el aeropuerto de origen y destino no sean iguales (comparación case-insensitive).
+   - Mensaje de error esperado: `"El origen y el destino no pueden ser iguales"`
 
 ## ⚙️ Configuración
 
@@ -263,6 +265,9 @@ Estos archivos son utilizados por el validador para verificar que los datos de e
 ## 👥 Contribuidores
 
 Proyecto desarrollado para el hackathon FlightOnTime.
+
+- **Ariel Caferri** – [Perfil](https://github.com/Ariel-84)  
+  Desarrollo del backend, validaciones, tests unitarios y documentación.
 
 ## 📄 Licencia
 
