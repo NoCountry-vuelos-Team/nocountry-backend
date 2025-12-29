@@ -28,7 +28,7 @@ class PredictValidatorTest {
                 () -> validator.validAreoline(request)
         );
 
-        assertTrue(exception.getMessage().contains("no existe en el catálogo de aerolíneas"));
+        assertTrue(exception.getMessage().contains("no existe en el catálogo"));
     }
 
     @Test
@@ -74,7 +74,7 @@ class PredictValidatorTest {
                 () -> validator.validOrigin(request)
         );
 
-        assertEquals("El aeropuerto de origen no existe", exception.getMessage());
+        assertTrue(exception.getMessage().contains("no existe en el catálogo"));
     }
 
     @Test
@@ -120,7 +120,7 @@ class PredictValidatorTest {
                 () -> validator.validDestination(request)
         );
 
-        assertEquals("El aeropuerto de destino no existe", exception.getMessage());
+        assertTrue(exception.getMessage().contains("no existe en el catálogo"));
     }
 
     @Test

@@ -24,18 +24,13 @@ public class PredictValidator {
      * cortar el flujo y que el controlador/manejador de errores responda al cliente.
      */
     public void validAreoline(PredictionRequest request) {
-        if (request == null || request.aerolinea() == null || request.aerolinea().isBlank()) {
-            throw new IllegalArgumentException("La aerolínea es obligatoria");
-        }
-
-        String codigo = request.aerolinea().trim().toUpperCase();
-
-        Set<String> codigosCatalogo = loadAirlinesFromCatalog();
-
-        if (!codigosCatalogo.contains(codigo)) {
-            throw new IllegalArgumentException(
-                    "La aerolínea '" + codigo + "' no existe en el catálogo de aerolíneas");
-        }
+        validateField(
+                request,
+                request != null ? request.aerolinea() : null,
+                "La aerolínea es obligatoria",
+                loadCatalogFromFile("catalog/airlines.csv", "aerolíneas"),
+                "aerolínea"
+        );
     }
 
     /**
@@ -45,19 +40,14 @@ public class PredictValidator {
      * Si el origen no existe, lanza IllegalArgumentException para
      * cortar el flujo y que el controlador/manejador de errores responda al cliente.
      */
-    public void validOrigin(PredictionRequest request){
-
-        if(request == null || request.origen() == null || request.origen().isBlank()){
-            throw new IllegalArgumentException("El aeropuerto de origen es obligatorio");
-        }
-
-        String codigo = request.origen().trim().toUpperCase();
-
-        Set<String> codigoOrigen = loadOrigenDestinoFromCatalog();
-
-        if(!codigoOrigen.contains(codigo)){
-            throw new IllegalArgumentException("El aeropuerto de origen no existe");
-        }
+    public void validOrigin(PredictionRequest request) {
+        validateField(
+                request,
+                request != null ? request.origen() : null,
+                "El aeropuerto de origen es obligatorio",
+                loadCatalogFromFile("catalog/origen-destino.csv", "origen-destino"),
+                "aeropuerto de origen"
+        );
     }
 
     /**
@@ -67,33 +57,45 @@ public class PredictValidator {
      * Si el destino no existe, lanza IllegalArgumentException para
      * cortar el flujo y que el controlador/manejador de errores responda al cliente.
      */
-    public void validDestination(PredictionRequest request){
+    public void validDestination(PredictionRequest request) {
+        validateField(
+                request,
+                request != null ? request.destino() : null,
+                "El aeropuerto de destino es obligatorio",
+                loadCatalogFromFile("catalog/origen-destino.csv", "origen-destino"),
+                "aeropuerto de destino"
+        );
+    }
 
-        if(request == null || request.destino() == null || request.destino().isBlank()){
-            throw new IllegalArgumentException("El aeropuerto de destino es obligatorio");
+    /**
+     * Método genérico para validar un campo contra un catálogo.
+     */
+    private void validateField(PredictionRequest request, String fieldValue,
+                               String emptyMessage, Set<String> catalog, String fieldName) {
+        if (request == null || fieldValue == null || fieldValue.isBlank()) {
+            throw new IllegalArgumentException(emptyMessage);
         }
 
-        String codigo = request.destino().trim().toUpperCase();
+        String codigo = fieldValue.trim().toUpperCase();
 
-        Set<String> codigoDestino = loadOrigenDestinoFromCatalog();
-
-        if(!codigoDestino.contains(codigo)){
-            throw new IllegalArgumentException("El aeropuerto de destino no existe");
+        if (!catalog.contains(codigo)) {
+            throw new IllegalArgumentException(
+                    "El " + fieldName + " '" + codigo + "' no existe en el catálogo");
         }
     }
 
     /**
-     * Lee el archivo airlines.csv desde el classpath y devuelve
-     * el conjunto de códigos de aerolínea válidos.
+     * Lee un archivo CSV desde el classpath y devuelve
+     * el conjunto de códigos válidos.
      *
-     * Formato esperado actual del archivo (una columna):
+     * Formato esperado del archivo (una columna):
      *   code
      *   AA
      *   DL
      *   ...
      */
-    private Set<String> loadAirlinesFromCatalog() {
-        ClassPathResource resource = new ClassPathResource("catalog/airlines.csv");
+    private Set<String> loadCatalogFromFile(String filePath, String catalogName) {
+        ClassPathResource resource = new ClassPathResource(filePath);
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
@@ -107,36 +109,7 @@ public class PredictValidator {
 
         } catch (IOException e) {
             throw new IllegalStateException(
-                    "No se pudo leer el catálogo de aerolíneas (catalog/airlines.csv)", e);
-        }
-    }
-
-    /**
-     * Lee el archivo origen-destino.csv desde el classpath y devuelve
-     * el conjunto de códigos de origenes y destinos válidos.
-     *
-     * Formato esperado actual del archivo (una columna):
-     *   code
-     *  MAD
-     *  GRU
-     *   ...
-     */
-    private Set<String> loadOrigenDestinoFromCatalog() {
-        ClassPathResource resource = new ClassPathResource("catalog/origen-destino.csv");
-
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
-
-            return reader.lines()
-                    .map(String::trim)
-                    .filter(line -> !line.isEmpty())
-                    .skip(1) // saltar cabecera "code"
-                    .map(String::toUpperCase)
-                    .collect(Collectors.toSet());
-
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                    "No se pudo leer el catálogo de origen-destino (catalog/origen-destino.csv)", e);
+                    "No se pudo leer el catálogo de " + catalogName + " (" + filePath + ")", e);
         }
     }
 }
