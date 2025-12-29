@@ -25,7 +25,7 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validAreoline(request)
+                () -> validator.validAreoline(request.aerolinea())
         );
 
         assertTrue(exception.getMessage().contains("no existe en el catálogo"));
@@ -36,7 +36,7 @@ class PredictValidatorTest {
         // Usa un código que esté en catalog/airlines.csv (p.ej. AA)
         PredictionRequest request = buildRequest("AA", "MAD", "GRU");
 
-        assertDoesNotThrow(() -> validator.validAreoline(request));
+        assertDoesNotThrow(() -> validator.validAreoline(request.aerolinea()));
     }
 
     @Test
@@ -45,10 +45,10 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validAreoline(request)
+                () -> validator.validAreoline(request.aerolinea())
         );
 
-        assertEquals("La aerolínea es obligatoria", exception.getMessage());
+        assertEquals("Campo o catalogo es null o vacio", exception.getMessage());
     }
 
     @Test
@@ -57,10 +57,10 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validAreoline(request)
+                () -> validator.validAreoline(request.aerolinea())
         );
 
-        assertEquals("La aerolínea es obligatoria", exception.getMessage());
+        assertEquals("Campo o catalogo es null o vacio", exception.getMessage());
     }
 
     // ========== TESTS PARA ORIGEN ==========
@@ -71,7 +71,7 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validOrigin(request)
+                () -> validator.validAirport(request.origen())
         );
 
         assertTrue(exception.getMessage().contains("no existe en el catálogo"));
@@ -83,10 +83,10 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validOrigin(request)
+                () -> validator.validAirport(request.origen())
         );
 
-        assertEquals("El aeropuerto de origen es obligatorio", exception.getMessage());
+        assertEquals("Campo o catalogo es null o vacio", exception.getMessage());
     }
 
     @Test
@@ -95,10 +95,10 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validOrigin(request)
+                () -> validator.validAirport(request.origen())
         );
 
-        assertEquals("El aeropuerto de origen es obligatorio", exception.getMessage());
+        assertEquals("Campo o catalogo es null o vacio", exception.getMessage());
     }
 
     @Test
@@ -106,7 +106,7 @@ class PredictValidatorTest {
         // Usa un código que esté en catalog/origen-destino.csv (p.ej. MAD)
         PredictionRequest request = buildRequest("AA", "MAD", "GRU");
 
-        assertDoesNotThrow(() -> validator.validOrigin(request));
+        assertDoesNotThrow(() -> validator.validAirport(request.origen()));
     }
 
     // ========== TESTS PARA DESTINO ==========
@@ -117,7 +117,7 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validDestination(request)
+                () -> validator.validAirport(request.destino())
         );
 
         assertTrue(exception.getMessage().contains("no existe en el catálogo"));
@@ -129,10 +129,10 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validDestination(request)
+                () -> validator.validAirport(request.destino())
         );
 
-        assertEquals("El aeropuerto de destino es obligatorio", exception.getMessage());
+        assertEquals("Campo o catalogo es null o vacio", exception.getMessage());
     }
 
     @Test
@@ -141,10 +141,10 @@ class PredictValidatorTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> validator.validDestination(request)
+                () -> validator.validAirport(request.destino())
         );
 
-        assertEquals("El aeropuerto de destino es obligatorio", exception.getMessage());
+        assertEquals("Campo o catalogo es null o vacio", exception.getMessage());
     }
 
     @Test
@@ -152,7 +152,7 @@ class PredictValidatorTest {
         // Usa un código que esté en catalog/origen-destino.csv (p.ej. GRU)
         PredictionRequest request = buildRequest("AA", "MAD", "GRU");
 
-        assertDoesNotThrow(() -> validator.validDestination(request));
+        assertDoesNotThrow(() -> validator.validAirport(request.destino()));
     }
 
     // ========== TEST COMBINADO ==========
@@ -162,9 +162,9 @@ class PredictValidatorTest {
         PredictionRequest request = buildRequest("AA", "MAD", "GRU");
 
         assertDoesNotThrow(() -> {
-            validator.validAreoline(request);
-            validator.validOrigin(request);
-            validator.validDestination(request);
+            validator.validAreoline(request.aerolinea());
+            validator.validAirport(request.origen());
+            validator.validAirport(request.destino());
         });
     }
 

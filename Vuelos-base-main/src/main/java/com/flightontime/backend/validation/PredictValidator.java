@@ -28,7 +28,8 @@ public class PredictValidator {
 		PredictionRequest normalizedRequest = normalizeToUpperCase(request);
 		validAreoline(normalizedRequest.aerolinea());
 		validAirport(normalizedRequest.origen()); // validation origin airport
-		validAirport(normalizedRequest.destino()); // validation destination airport		
+		validAirport(normalizedRequest.destino()); // validation destination airport
+		validateDepartureDateIsNotPast(request.fechaPartida());
 	}
 
 	/**
