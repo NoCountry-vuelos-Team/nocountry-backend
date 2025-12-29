@@ -16,100 +16,81 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PredictValidator {
 
-    /**
-     * Valida que la aerolínea del request exista en el catálogo
-     * de airlines definido en resources/catalog/airlines.csv.
-     *
-     * Si la aerolínea no existe, lanza IllegalArgumentException para
-     * cortar el flujo y que el controlador/manejador de errores responda al cliente.
-     */
-    public void validAreoline(PredictionRequest request) {
-        validateField(
-                request,
-                request != null ? request.aerolinea() : null,
-                "La aerolínea es obligatoria",
-                loadCatalogFromFile("catalog/airlines.csv", "aerolíneas"),
-                "aerolínea"
-        );
-    }
+	/**
+	 * Valida el request convirtiendo todos los strings a mayúsculas antes de
+	 * enviarlo al validador. Esto asegura que la validación se haga con los valores
+	 * normalizados.
+	 */
+	public void validation(PredictionRequest request) {
 
-    /**
-     * Valida que el origen del request exista en el catálogo
-     * de origen-destino definido en resources/catalog/origen-destino.csv.
-     *
-     * Si el origen no existe, lanza IllegalArgumentException para
-     * cortar el flujo y que el controlador/manejador de errores responda al cliente.
-     */
-    public void validOrigin(PredictionRequest request) {
-        validateField(
-                request,
-                request != null ? request.origen() : null,
-                "El aeropuerto de origen es obligatorio",
-                loadCatalogFromFile("catalog/origen-destino.csv", "origen-destino"),
-                "aeropuerto de origen"
-        );
-    }
+		PredictionRequest normalizedRequest = normalizeToUpperCase(request);
+		validAreoline(normalizedRequest.aerolinea());
+		validAirport(normalizedRequest.origen()); // validation origin airport
+		validAirport(normalizedRequest.destino()); // validation destination airport		
+	}
 
-    /**
-     * Valida que el destino del request exista en el catálogo
-     * de origen-destino definido en resources/catalog/origen-destino.csv.
-     *
-     * Si el destino no existe, lanza IllegalArgumentException para
-     * cortar el flujo y que el controlador/manejador de errores responda al cliente.
-     */
-    public void validDestination(PredictionRequest request) {
-        validateField(
-                request,
-                request != null ? request.destino() : null,
-                "El aeropuerto de destino es obligatorio",
-                loadCatalogFromFile("catalog/origen-destino.csv", "origen-destino"),
-                "aeropuerto de destino"
-        );
-    }
+	/**
+	 * Valida que la aerolínea del request exista en el catálogo de airlines
+	 * definido en resources/catalog/airlines.csv.
+	 */
+	public void validAreoline(String aerolinea) {
+		validateField(aerolinea, loadCatalogFromFile("catalog/airlines.csv"), "airlines.csv");
+	}
 
-    /**
-     * Método genérico para validar un campo contra un catálogo.
-     */
-    private void validateField(PredictionRequest request, String fieldValue,
-                               String emptyMessage, Set<String> catalog, String fieldName) {
-        if (request == null || fieldValue == null || fieldValue.isBlank()) {
-            throw new IllegalArgumentException(emptyMessage);
-        }
+	/**
+	 * Valida que el origen o el destino exista en el catálogo de airports
+	 * definido en resources/catalog/airports.csv.
+	 */
+	public void validAirport(String airport) {
+		validateField(airport, loadCatalogFromFile("catalog/airports.csv"), "airports.csv");
+	}
 
-        String codigo = fieldValue.trim().toUpperCase();
+	/**
+	 * Método genérico para validar un campo contra un catálogo.
+	 */
+	private void validateField(String fieldName, Set<String> catalog, String catalogName) {
+		if (fieldName == null || fieldName.isBlank() || catalog.isEmpty()) {
+			throw new IllegalArgumentException("Campo o catalogo es null o vacio");
+		}
 
-        if (!catalog.contains(codigo)) {
-            throw new IllegalArgumentException(
-                    "El " + fieldName + " '" + codigo + "' no existe en el catálogo");
-        }
-    }
+		if (!catalog.contains(fieldName)) {
+			throw new IllegalArgumentException("El codigo " + fieldName + " no existe en el catálogo " + catalogName);
+		}
+	}
 
-    /**
-     * Lee un archivo CSV desde el classpath y devuelve
-     * el conjunto de códigos válidos.
-     *
-     * Formato esperado del archivo (una columna):
-     *   code
-     *   AA
-     *   DL
-     *   ...
-     */
-    private Set<String> loadCatalogFromFile(String filePath, String catalogName) {
-        ClassPathResource resource = new ClassPathResource(filePath);
+	/**
+	 * Lee un archivo CSV desde el classpath y devuelve el conjunto de códigos
+	 * válidos.
+	 *
+	 * Formato esperado del archivo (una columna): code AA DL ...
+	 */
+	private Set<String> loadCatalogFromFile(String filePath) {
+		ClassPathResource resource = new ClassPathResource(filePath);
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+		try (BufferedReader reader = new BufferedReader(
+				new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
 
-            return reader.lines()
-                    .map(String::trim)
-                    .filter(line -> !line.isEmpty())
-                    .skip(1) // saltar cabecera "code"
-                    .map(String::toUpperCase)
-                    .collect(Collectors.toSet());
+			return reader.lines().map(String::trim).filter(line -> !line.isEmpty()).skip(1) // saltar cabecera "code"
+					.map(String::toUpperCase).collect(Collectors.toSet());
 
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                    "No se pudo leer el catálogo de " + catalogName + " (" + filePath + ")", e);
-        }
-    }
+		} catch (IOException e) {
+			throw new IllegalStateException("No se pudo leer el catálogo de  (" + filePath + ")", e);
+		}
+	}
+
+	/**
+	 * Crea un nuevo PredictionRequest con todos los strings convertidos a
+	 * mayúsculas. Los valores numéricos y fechas se mantienen igual.
+	 */
+	private PredictionRequest normalizeToUpperCase(PredictionRequest request) {
+		if (request == null) {
+			return null;
+		}
+
+		return new PredictionRequest(request.aerolinea() != null ? request.aerolinea().toUpperCase() : null,
+				request.origen() != null ? request.origen().toUpperCase() : null,
+				request.destino() != null ? request.destino().toUpperCase() : null, request.fechaPartida(),
+				request.distanciaKm());
+	}
+
 }

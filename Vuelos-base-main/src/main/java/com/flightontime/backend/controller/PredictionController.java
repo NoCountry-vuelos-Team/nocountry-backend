@@ -17,23 +17,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PredictionController {
 
-    private final PredictionService predictionService;
-    
-    //Endpoint para verificar que el controller esta funcionando
-    @GetMapping("/ping")
-    public ResponseEntity<String> ping(){
-    	return ResponseEntity.ok("OK");
-    } 
-    
-    //Endpoint principal 
+	private final PredictionService predictionService;
 
-    @PostMapping
-    public ResponseEntity<String> predict(
-            @RequestBody @Valid PredictionRequest request
-    ) {
-        //PredictionResponse response = predictionService.predict(request);
-        return ResponseEntity.ok("Endpoint principal funcionando correctamente");
-    }
+	// Endpoint para verificar que el controller esta funcionando
+	@GetMapping("/ping")
+	public ResponseEntity<String> ping() {
+		return ResponseEntity.ok("OK");
+	}
+
+	// Endpoint principal
+
+	@PostMapping
+	public ResponseEntity<PredictionResponse> predict(@RequestBody @Valid PredictionRequest request) {
+		PredictionResponse response = predictionService.predict(request);
+		return ResponseEntity.ok(response);
+	}
 }
-
-
