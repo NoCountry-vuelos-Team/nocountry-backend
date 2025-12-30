@@ -7,10 +7,16 @@ import com.flightontime.backend.dto.response.PredictionResponse;
 //import com.flightontime.backend.repository.PredictionRepository;
 import com.flightontime.backend.validation.PredictValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 //import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class PredictionService {
 
@@ -19,57 +25,54 @@ public class PredictionService {
     private final DataScienceClient dataScienceClient;
     private final PredictValidator predictValidator;
     
-    /**
-     * Valida el request convirtiendo todos los strings a mayúsculas antes de enviarlo al validador.
-     * Esto asegura que la validación se haga con los valores normalizados.
-     */
-    public String validation(PredictionRequest request) {
-        // Convertir todos los strings a mayúsculas antes de validar
-        PredictionRequest normalizedRequest = normalizeToUpperCase(request);
-        
-        // Enviar al validador con los valores normalizados
-        predictValidator.validAreoline(normalizedRequest);
-        
-        return "serviciofuncionando";
-    }
-    
-    /**
-     * Crea un nuevo PredictionRequest con todos los strings convertidos a mayúsculas.
-     * Los valores numéricos y fechas se mantienen igual.
-     */
-    private PredictionRequest normalizeToUpperCase(PredictionRequest request) {
-        if (request == null) {
-            return null;
-        }
-        
-        return new PredictionRequest(
-            request.aerolinea() != null ? request.aerolinea().toUpperCase() : null,
-            request.origen() != null ? request.origen().toUpperCase() : null,
-            request.destino() != null ? request.destino().toUpperCase() : null,
-            request.fechaPartida(),
-            request.distanciaKm()
-        );
-    }
-    
-    
-    
-    
 
     // Persistencia a base de datos comentada temporalmente
     //@Transactional
     public PredictionResponse predict(PredictionRequest request) {
-        /*
-        Prediction prediction = new Prediction();
-        prediction.setAerolinea(request.aerolinea());
-        prediction.setOrigen(request.origen());
-        prediction.setDestino(request.destino());
-        prediction.setFechaPartida(request.fechaPartida());
-        prediction.setDistanciaKm(request.distanciaKm());
-        repository.save(prediction);
-        */
-
-        // Llamada (o mock) al modelo de Data Science
-        return dataScienceClient.predictDelay(request);
+        log.debug("Iniciando predict metodo: aerolinea={}, origen={}, destino={}", 
+                request.aerolinea(), request.origen(), request.destino());
+        
+        try {
+            // Validación de datos de entrada
+            predictValidator.validation(request);
+            // Llamada (o mock) al modelo de Data Science
+            PredictionResponse response = dataScienceClient.predictDelay(request);
+            log.info("Predicción completada exitosamente: prevision={}, probabilidad={}", 
+                    response.prevision(), response.probabilidad());
+            return response;
+            
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.warn("Error de validación del request: {}", e.getMessage(), e);
+            // Re-lanzamos la excepción para que el GlobalExceptionHandler la maneje como 400
+            throw e;
+            
+        } catch (HttpClientErrorException e) {
+            log.error("Error del cliente HTTP al consultar modelo de Data Science. Status: {}, Response: {}", 
+                    e.getStatusCode(), e.getResponseBodyAsString(), e);
+            // Para 422 (Unprocessable Entity), se propaga con el status code original
+            if (e.getStatusCode().value() == 422) {
+                throw new RuntimeException("El modelo de Data Science no pudo procesar la solicitud: " + e.getMessage(), e);
+            }
+            // Para otros errores 4xx, se propaga como error de servicio
+            throw new RuntimeException("Error al consultar el modelo de Data Science: " + e.getMessage(), e);
+            
+        } catch (HttpServerErrorException e) {
+            log.error("Error del servidor HTTP en el modelo de Data Science. Status: {}, Response: {}", 
+                    e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new RuntimeException("Error interno en el modelo de Data Science: " + e.getMessage(), e);
+            
+        } catch (ResourceAccessException e) {
+            log.error("No se pudo conectar con el servicio de Data Science: {}", e.getMessage(), e);
+            throw new RuntimeException("El servicio de Data Science no está disponible temporalmente", e);
+            
+        } catch (RestClientException e) {
+            log.error("Error inesperado al comunicarse con el modelo de Data Science: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al comunicarse con el modelo de Data Science: " + e.getMessage(), e);
+            
+        } catch (Exception e) {
+            log.error("Error inesperado durante la predicción: {}", e.getMessage(), e);
+            throw new RuntimeException("Error inesperado al procesar la predicción: " + e.getMessage(), e);
+        }
     }
 }
 
