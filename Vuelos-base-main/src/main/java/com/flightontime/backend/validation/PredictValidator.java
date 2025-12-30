@@ -32,7 +32,8 @@ public class PredictValidator {
 		validAreoline(normalizedRequest.aerolinea());
 		validAirport(normalizedRequest.origen()); // validation origin airport
 		validAirport(normalizedRequest.destino()); // validation destination airport
-		validateDepartureDateIsNotPast(request.fechaPartida());
+		validateDepartureDateIsNotPast(request.fechaPartida()); //valida fecha futura
+		validateOriginAndDestinationAreDifferent(normalizedRequest.origen(), normalizedRequest.destino());
 	}
 
 	/**
