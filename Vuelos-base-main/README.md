@@ -224,7 +224,8 @@ El sistema incluye las siguientes validaciones:
    - Origen/Destino: 3 caracteres, solo letras (códigos IATA)
    - Fecha: Formato `yyyy-MM-dd HH:mm:ss`
    - Distancia: Número positivo con máximo 7 dígitos enteros y 2 decimales
-3. **Validación de Origenes y destinos**: Verifica que el código de origen y destino exista en el catálogo `catalog/origen-destino.csv`
+3. **Validación de Origen y Destino**: Verifica que el aeropuerto de origen y destino no sean iguales (comparación case-insensitive).
+   - Mensaje de error esperado: `"El origen y el destino no pueden ser iguales"`
 
 ## ⚙️ Configuración
 
@@ -252,7 +253,6 @@ El proyecto incluye catálogos en formato CSV en `src/main/resources/catalog/`:
 
 - **airlines.csv**: Lista de códigos de aerolíneas válidas
 - **airports.csv**: Lista de códigos de aeropuertos válidos
-- **origen-destino.csv** Lista de códigos de origenes y destinos validos
 
 Estos archivos son utilizados por el validador para verificar que los datos de entrada sean correctos.
 
@@ -263,23 +263,13 @@ Estos archivos son utilizados por el validador para verificar que los datos de e
 - **Puerto**: Por defecto la aplicación corre en el puerto 8080. Puedes cambiarlo en `application.properties` con `server.port=8081`
 
 ## 👥 Contribuidores
-Adrián Zúñiga Castro, 
 
 Proyecto desarrollado para el hackathon FlightOnTime.
+
+- **Ariel Caferri** – [Perfil](https://github.com/Ariel-84)  
+  Desarrollo del backend, validaciones, tests unitarios y documentación.
 
 ## 📄 Licencia
 
 [Especificar licencia si aplica]
-
-
-# Funcionalidades opcionales
-
-Endpoint GET /stats: devuelve estadísticas agregadas (ej.: % de vuelos retrasados en el día).
-Persistencia: guardar historial de predicciones y peticiones en una base de datos (H2/PostgreSQL).
-Dashboard visual (Streamlit/HTML): muestra, en tiempo real, la tasa de retrasos prevista.
-Integración con API externa de clima: añadir condiciones meteorológicas como feature del modelo.
-Batch prediction: aceptar un archivo CSV con varios vuelos y devolver las predicciones en lote.
-Explicabilidad: devolver las variables más importantes en la decisión (ej.: "Hora de la tarde y aeropuerto GIG aumentan el riesgo").
-Contenerización: ejecutar el sistema completo con Docker/Docker Compose.
-Pruebas automatizadas: unitarias y de integración simples.
 
