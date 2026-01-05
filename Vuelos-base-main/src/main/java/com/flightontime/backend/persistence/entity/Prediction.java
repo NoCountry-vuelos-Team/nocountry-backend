@@ -1,4 +1,4 @@
-package com.flightontime.backend.domain;
+package com.flightontime.backend.persistence.entity;
 
 // Imports de JPA comentados temporalmente
 //import jakarta.persistence.Entity;
