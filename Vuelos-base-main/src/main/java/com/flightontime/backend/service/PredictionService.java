@@ -1,10 +1,11 @@
 package com.flightontime.backend.service;
 
 import com.flightontime.backend.client.DataScienceClient;
-//import com.flightontime.backend.domain.Prediction;
+import com.flightontime.backend.persistence.entity.PredictionEntity;
 import com.flightontime.backend.dto.request.PredictionRequest;
 import com.flightontime.backend.dto.response.PredictionResponse;
-//import com.flightontime.backend.repository.PredictionRepository;
+import com.flightontime.backend.persistence.entity.PredictionResult;
+import com.flightontime.backend.repository.PredictionRepository;
 import com.flightontime.backend.validation.PredictValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,21 +14,19 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
-//import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class PredictionService {
 
-    // Repository comentado temporalmente - no se usa base de datos por el momento
-    //private final PredictionRepository repository;
+    private final PredictionRepository repository;
     private final DataScienceClient dataScienceClient;
     private final PredictValidator predictValidator;
     
 
-    // Persistencia a base de datos comentada temporalmente
-    //@Transactional
+
     public PredictionResponse predict(PredictionRequest request) {
         log.debug("Iniciando predict metodo: aerolinea={}, origen={}, destino={}", 
                 request.aerolinea(), request.origen(), request.destino());
@@ -38,6 +37,11 @@ public class PredictionService {
             // Llamada (o mock) al modelo de Data Science
             PredictionResponse response = dataScienceClient.predictDelay(request);
             log.info("Predicción completada exitosamente: prevision={}, probabilidad={}", 
+                    response.prevision(), response.probabilidad());
+
+            savePrediction(request, response);
+
+            log.info("Predicción completada exitosamente: prevision={}, probabilidad={}",
                     response.prevision(), response.probabilidad());
             return response;
             
@@ -74,6 +78,30 @@ public class PredictionService {
             throw new RuntimeException("Error inesperado al procesar la predicción: " + e.getMessage(), e);
         }
     }
+
+
+    @Transactional
+    private void savePrediction(PredictionRequest request, PredictionResponse response) {
+        try {
+            PredictionEntity entity = new PredictionEntity();
+
+            entity.setAerolinea(request.aerolinea().toUpperCase());
+            entity.setOrigen(request.origen().toUpperCase());
+            entity.setDestino(request.destino().toUpperCase());
+            entity.setFechaPartida(request.fechaPartida());
+            entity.setDistanciaKm(request.distanciaKm().intValue());
+            entity.setPrevision(PredictionResult.valueOf(response.prevision().toUpperCase()));
+            entity.setProbabilidad(response.probabilidad());
+
+            repository.save(entity);
+
+            log.debug("Predicción persistida exitosamente con ID: {}", entity.getId());
+
+        } catch (Exception e) {
+            log.error("Error al persistir la predicción en la base de datos. La predicción se completó pero no se guardó en historial.", e);
+        }
+    }
 }
+
 
 
