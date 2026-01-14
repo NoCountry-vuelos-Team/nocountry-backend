@@ -263,7 +263,7 @@ Estos archivos son utilizados por el validador para verificar que los datos de e
 - **Puerto**: Por defecto la aplicación corre en el puerto 8080. Puedes cambiarlo en `application.properties` con `server.port=8081`
 
 ## 👥 Contribuidores
-Adrián Zúñiga Castro, 
+Adrián Zúñiga Castro, Natalia Muñoz (Desarroladora junior)
 
 Proyecto desarrollado para el hackathon FlightOnTime.
 
