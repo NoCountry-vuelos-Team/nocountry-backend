@@ -2,34 +2,11 @@
 
 ## 📋 Descripción del Proyecto
 
-**FlightOnTime** es una aplicación Back-End que predice si un vuelo viene atrasado o no. El sistema expone una API REST capaz de recibir información de un vuelo (aerolínea, origen, destino, fecha de partida y distancia) y devolver una predicción de puntualidad basada en un modelo de Data Science.
+**FlightOnTime** es una aplicación Back-End que predice si un vuelo viene atrasado o no. El sistema expone una API REST capaz de recibir información de un vuelo (aerolínea, origen, destino, fecha de partida y distancia) y devolver una predicción de puntualidad basada en un modelo de Data Science integrado con una API externa de Machine Learning.
 
 ## 🎯 Alcance del Back-End
 
-El Back-End debe exponer una API REST capaz de recibir información de un vuelo y devolver una predicción de puntualidad basada en un modelo de Data Science.
-
-### Endpoint Obligatorio
-
-**POST** `/predict`
-
-**Request (JSON):**
-```json
-{
-  "aerolinea": "AA",
-  "origen": "JFK",
-  "destino": "LAX",
-  "fechaPartida": "2025-11-10T14:30:00",
-  "distanciaKm": 350.0
-}
-```
-
-**Response (JSON):**
-```json
-{
-  "prevision": "Retrasado",
-  "probabilidad": 0.78
-}
-```
+El Back-End expone una API REST capaz de recibir información de un vuelo y devolver una predicción de puntualidad basada en un modelo de Data Science. El sistema se integra con la API externa `https://flightdelaypredictor-api.onrender.com` para realizar las predicciones utilizando modelos de Machine Learning.
 
 ## 🛠️ Tecnologías y Frameworks
 
@@ -39,25 +16,38 @@ Este proyecto está construido con las siguientes tecnologías:
 - **Spring Boot 4.0.0** - Framework principal
 - **Spring Web** - Para la construcción de la API REST
 - **Spring Validation** - Para validación de datos de entrada
+- **Spring Data JPA** - Para persistencia de datos
+- **PostgreSQL** - Base de datos relacional
 - **Lombok** - Para reducir código boilerplate
 - **JUnit 5** - Framework de testing (incluido en spring-boot-starter-test)
 - **Maven** - Gestor de dependencias y construcción del proyecto
+- **SpringDoc OpenAPI (Swagger)** - Para documentación interactiva de la API
 
-### Dependencias Principales
+## 📦 Dependencias Principales
+
+El proyecto utiliza las siguientes dependencias Maven:
 
 ```xml
-- spring-boot-starter-web
-- spring-boot-starter-validation
-- lombok
-- spring-boot-starter-test (para tests unitarios)
+
+        spring-boot-starter-web
+        spring-boot-starter-validation
+        spring-boot-starter-data-jpa
+        spring-boot-starter-test    
+    <!-- Base de datos -->    
+        postgresql
+    <!-- Utilidades -->    
+        lombok    
+    <!-- Documentación API (Swagger) -->    
+        springdoc-openapi-starter-webmvc-ui
 ```
 
-## 📦 Requisitos Previos
+## 📋 Requisitos Previos
 
 Antes de ejecutar el proyecto, asegúrate de tener instalado:
 
 - **Java JDK 17** o superior
 - **Maven 3.6+** (o usar el wrapper incluido `mvnw`)
+- **PostgreSQL** (para base de datos, opcional en desarrollo local)
 - **Git** (para clonar el repositorio)
 
 ### Verificar Instalación
@@ -124,6 +114,37 @@ curl http://localhost:8080/predict/ping
 
 Deberías recibir: `OK`
 
+## 📖 Swagger UI - Documentación Interactiva de la API
+
+El proyecto incluye Swagger UI para documentación interactiva de la API. Una vez que la aplicación esté corriendo, puedes acceder a la documentación de la siguiente manera:
+
+### Acceder a Swagger UI
+
+1. **Abrir en el navegador:**
+   ```
+   http://localhost:8080/swagger-ui.html
+   ```
+   o
+   ```
+   http://localhost:8080/swagger-ui/index.html
+   ```
+
+2. **Documentación OpenAPI (JSON):**
+   ```
+   http://localhost:8080/v3/api-docs
+   ```
+
+### Características de Swagger UI
+
+- **Interfaz interactiva**: Puedes probar los endpoints directamente desde la interfaz web
+- **Documentación completa**: Incluye descripciones, ejemplos y códigos de respuesta
+- **Validación en tiempo real**: Muestra los esquemas de validación para cada endpoint
+- **Ejemplos de request/response**: Incluye ejemplos de solicitudes y respuestas
+
+### Configuración de Swagger
+
+Swagger está configurado para ejecutarse solo en el ambiente local (según `application-local.properties`). Para producción, Swagger está deshabilitado por defecto.
+
 ## 📁 Estructura del Proyecto
 
 ```
@@ -134,7 +155,7 @@ src/
 │   │   │   └── PredictionController.java
 │   │   ├── service/             # Lógica de negocio
 │   │   │   └── PredictionService.java
-│   │   ├── repository/          # Repositorios (actualmente comentado - sin BD)
+│   │   ├── repository/          # Repositorios JPA
 │   │   │   └── PredictionRepository.java
 │   │   ├── client/              # Cliente para API de Data Science
 │   │   │   └── DataScienceClient.java
@@ -149,12 +170,15 @@ src/
 │   │   ├── validation/          # Validadores personalizados
 │   │   │   └── PredictValidator.java
 │   │   ├── config/              # Configuraciones
-│   │   │   └── RestTemplateConfig.java
-│   │   ├── domain/              # Entidades de dominio
-│   │   │   └── Prediction.java
+│   │   │   ├── RestTemplateConfig.java
+│   │   │   └── SwaggerConfig.java
+│   │   ├── persistence/         # Entidades JPA
+│   │   │   └── entity/
 │   │   └── FlightOnTimeApplication.java  # Clase principal
 │   └── resources/
 │       ├── application.properties
+│       ├── application-local.properties
+│       ├── application-prod.properties
 │       └── catalog/             # Catálogos de datos
 │           ├── airlines.csv
 │           └── airports.csv
@@ -167,37 +191,176 @@ src/
 ## 🔌 Endpoints Disponibles
 
 ### POST /predict
-Predice si un vuelo viene atrasado o no.
 
-**Request:**
+Endpoint principal para predecir si un vuelo sufrirá retraso o llegará a tiempo.
+
+**Descripción:**
+Este endpoint recibe los datos de un vuelo (aerolínea, origen, destino, fecha de partida y distancia) y devuelve una predicción basada en modelos de Machine Learning. El sistema valida todos los campos de entrada y luego consulta la API externa de Data Science (`https://flightdelaypredictor-api.onrender.com`) para obtener la predicción.
+
+**URL Base:** `http://localhost:8080/predict`
+
+**Método:** `POST`
+
+**Content-Type:** `application/json`
+
+**Request Body:**
 ```json
 {
   "aerolinea": "AA",
   "origen": "JFK",
   "destino": "LAX",
-  "fechaPartida": "2025-11-10T14:30:00",
+  "fechaPartida": "2024-01-15 14:30:00",
   "distanciaKm": 350.0
 }
 ```
 
-**Response (200 OK):**
+**Campos del Request:**
+- `aerolinea` (String, requerido): Código IATA de la aerolínea (2 letras). Ejemplo: "AA", "UA", "DL"
+- `origen` (String, requerido): Código IATA del aeropuerto de origen (3 letras). Ejemplo: "JFK", "LAX", "SFO"
+- `destino` (String, requerido): Código IATA del aeropuerto de destino (3 letras). Ejemplo: "JFK", "LAX", "MIA"
+- `fechaPartida` (String, requerido): Fecha y hora de partida en formato `yyyy-MM-dd HH:mm:ss`. Ejemplo: "2024-01-15 14:30:00"
+- `distanciaKm` (Double, requerido): Distancia del vuelo en kilómetros. Máximo 7 dígitos enteros y 2 decimales. Debe ser mayor a 0.
+
+**Response Exitoso (200 OK):**
 ```json
 {
-  "prevision": "Retrasado",
-  "probabilidad": 0.78
+  "prevision": "A TIEMPO",
+  "probabilidad": 0.85
 }
 ```
 
-**Errores posibles:**
+**Campos del Response:**
+- `prevision` (String): Resultado de la predicción. Valores posibles: "A TIEMPO" o "RETRASADO"
+- `probabilidad` (Double): Nivel de confianza del modelo (0.0 a 1.0). 1.0 representa 100% de confianza
+
+**Códigos de Error:**
 - `400 Bad Request`: Error de validación en los datos de entrada
-- `500 Internal Server Error`: Error interno del servidor
+- `500 Internal Server Error`: Error interno del servidor o error al comunicarse con la API de Data Science
 
 ### GET /predict/ping
-Endpoint de salud para verificar que el servicio está funcionando.
+
+Endpoint de healthcheck para verificar que el servicio está funcionando.
+
+**URL:** `http://localhost:8080/predict/ping`
+
+**Método:** `GET`
 
 **Response (200 OK):**
 ```
 OK
+```
+
+## 📝 Ejemplos de Uso con Postman
+
+### Ejemplo 1: Vuelo Predicho a Tiempo
+
+**Request:**
+```
+POST http://localhost:8080/predict
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "aerolinea": "AA",
+  "origen": "SFO",
+  "destino": "LAX",
+  "fechaPartida": "2024-01-15 14:30:00",
+  "distanciaKm": 559.23
+}
+```
+
+**Response Esperado (200 OK):**
+```json
+{
+  "prevision": "A TIEMPO",
+  "probabilidad": 0.85
+}
+```
+
+### Ejemplo 2: Vuelo Predicho con Retraso
+
+**Request:**
+```
+POST http://localhost:8080/predict
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "aerolinea": "UA",
+  "origen": "JFK",
+  "destino": "MIA",
+  "fechaPartida": "2024-01-20 08:15:00",
+  "distanciaKm": 1762.50
+}
+```
+
+**Response Esperado (200 OK):**
+```json
+{
+  "prevision": "RETRASADO",
+  "probabilidad": 0.78
+}
+```
+
+### Ejemplo 3: Vuelo de Larga Distancia
+
+**Request:**
+```
+POST http://localhost:8080/predict
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "aerolinea": "DL",
+  "origen": "ATL",
+  "destino": "LAX",
+  "fechaPartida": "2024-02-10 16:45:00",
+  "distanciaKm": 3234.75
+}
+```
+
+**Response Esperado (200 OK):**
+```json
+{
+  "prevision": "A TIEMPO",
+  "probabilidad": 0.92
+}
+```
+
+### Ejemplo de Error: Validación Falla
+
+**Request:**
+```
+POST http://localhost:8080/predict
+Content-Type: application/json
+```
+
+**Body (con error):**
+```json
+{
+  "aerolinea": "ABC",
+  "origen": "JFK",
+  "destino": "JFK",
+  "fechaPartida": "2024-01-15",
+  "distanciaKm": -100
+}
+```
+
+**Response Esperado (400 Bad Request):**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "La aerolínea debe tener exactamente 2 caracteres",
+  "path": "/predict"
+}
 ```
 
 ## 🧪 Ejecutar Tests
@@ -218,33 +381,52 @@ Los tests se encuentran en: `src/test/java/com/flightontime/backend/validation/`
 
 El sistema incluye las siguientes validaciones:
 
-1. **Validación de Aerolínea**: Verifica que el código de aerolínea exista en el catálogo `catalog/airlines.csv`
+1. **Validación de Aerolínea**: 
+   - Debe tener exactamente 2 caracteres
+   - Solo letras (mayúsculas o minúsculas)
+   - Debe existir en el catálogo `catalog/airlines.csv`
+
 2. **Validación de Formato**: 
-   - Aerolínea: 2 caracteres, solo letras
    - Origen/Destino: 3 caracteres, solo letras (códigos IATA)
    - Fecha: Formato `yyyy-MM-dd HH:mm:ss`
    - Distancia: Número positivo con máximo 7 dígitos enteros y 2 decimales
-3. **Validación de Origenes y destinos**: Verifica que el código de origen y destino exista en el catálogo `catalog/origen-destino.csv`
+
+3. **Validación de Origen y Destino**: 
+   - Verifica que el aeropuerto de origen y destino no sean iguales (comparación case-insensitive)
+   - Mensaje de error: `"El origen y el destino no pueden ser iguales"`
 
 ## ⚙️ Configuración
 
 ### application.properties
 
-El archivo de configuración se encuentra en `src/main/resources/application.properties`:
+El archivo de configuración principal se encuentra en `src/main/resources/application.properties`:
 
 ```properties
-spring.application.name=FlightOnTime
+# Configuracion comun para todos los ambientes
+spring.application.name=Prototipo
+
+# Data Science API
+datascience.api.url=https://flightdelaypredictor-api.onrender.com
 ```
 
-### Configuración de API de Data Science (Opcional)
+### Configuración de API de Data Science
 
-Si deseas conectar con un modelo de Data Science externo, configura la URL en `application.properties`:
+La API está configurada para conectarse con el servicio externo de Machine Learning:
 
 ```properties
-datascience.api.url=aun por definir
+datascience.api.url=https://flightdelaypredictor-api.onrender.com
 ```
 
-Si no se configura, el sistema devolverá una respuesta mock por defecto.
+**Nota:** Esta URL apunta a la API externa que realiza las predicciones usando modelos de Machine Learning. Puedes acceder a la documentación de la API externa en: `https://flightdelaypredictor-api.onrender.com/docs`
+
+Si no se configura esta URL, el sistema devolverá una respuesta mock por defecto (útil para desarrollo y pruebas).
+
+### Configuración por Ambiente
+
+El proyecto incluye configuraciones específicas por ambiente:
+
+- **application-local.properties**: Configuración para desarrollo local (incluye Swagger habilitado)
+- **application-prod.properties**: Configuración para producción (Swagger deshabilitado)
 
 ## 🔍 Catálogos de Datos
 
@@ -252,34 +434,48 @@ El proyecto incluye catálogos en formato CSV en `src/main/resources/catalog/`:
 
 - **airlines.csv**: Lista de códigos de aerolíneas válidas
 - **airports.csv**: Lista de códigos de aeropuertos válidos
-- **origen-destino.csv** Lista de códigos de origenes y destinos validos
 
 Estos archivos son utilizados por el validador para verificar que los datos de entrada sean correctos.
 
 ## 📚 Notas Adicionales
 
-
 - **Lombok**: Asegúrate de tener habilitado el procesamiento de anotaciones en tu IDE para que Lombok funcione correctamente.
 - **Puerto**: Por defecto la aplicación corre en el puerto 8080. Puedes cambiarlo en `application.properties` con `server.port=8081`
+- **Base de Datos**: El proyecto utiliza PostgreSQL. Asegúrate de tener la base de datos configurada según el ambiente que estés usando.
+- **Swagger**: La documentación interactiva de Swagger está habilitada solo en el ambiente local por defecto.
 
-## 👥 Contribuidores
-Adrián Zúñiga Castro, Natalia Muñoz (Desarroladora junior)
+## 👥 Colaboradores
+
+Este proyecto fue desarrollado por un equipo internacional de desarrolladores Java Backend para el hackathon FlightOnTime.
+
+### 🌎 Equipo de Desarrollo
+
+#### **Adrián Zúñiga** 🇨🇷 Costa Rica
+- **GitHub:** [@adrianpyth](https://github.com/adrianpyth)
+- **Contribuciones:** Validaciones, pruebas unitarias, documentacion  y configuración de Swagger.
+
+#### **Ricardo Nacif Paez Henaine** 🇲🇽 México
+- **GitHub:** [@RickyRick-s](https://github.com/RickyRick-s)
+- **Contribuciones:** Validaciones, pruebas unitarias, creación de la estructura base del proyecto, y persistencia de datos.
+
+#### **Ariel Caferri** 🇦🇷 Argentina
+- **GitHub:** [@Ariel-84](https://github.com/Ariel-84)
+- **Contribuciones:** Validaciones, tests unitarios, definicion del modelo y documentacion .
+
+#### **Natalia Muñoz** 🇨🇴 Colombia
+- **GitHub:** [@Natams7526](https://github.com/Natams7526)
+- **Contribuciones:** Integración del proyecto, liderazgo del equipo backend, validaciones, pruebas unitarias, implementación del modelo de Machine Learning y definición de la estructura del proyecto backend.
+
+#### **Sathiel** 🧪 Testing & DevOps
+- **GitHub:** [@Sathiel13](https://github.com/Sathiel13)
+- **Contribuciones:** Testing del proyecto y orquestación del proyecto en GitHub.
+
+---
+
+**Todos los colaboradores son desarrolladores Java Backend especializados en Spring Boot y tecnologías relacionadas.**
 
 Proyecto desarrollado para el hackathon FlightOnTime.
 
 ## 📄 Licencia
 
 [Especificar licencia si aplica]
-
-
-# Funcionalidades opcionales
-
-Endpoint GET /stats: devuelve estadísticas agregadas (ej.: % de vuelos retrasados en el día).
-Persistencia: guardar historial de predicciones y peticiones en una base de datos (H2/PostgreSQL).
-Dashboard visual (Streamlit/HTML): muestra, en tiempo real, la tasa de retrasos prevista.
-Integración con API externa de clima: añadir condiciones meteorológicas como feature del modelo.
-Batch prediction: aceptar un archivo CSV con varios vuelos y devolver las predicciones en lote.
-Explicabilidad: devolver las variables más importantes en la decisión (ej.: "Hora de la tarde y aeropuerto GIG aumentan el riesgo").
-Contenerización: ejecutar el sistema completo con Docker/Docker Compose.
-Pruebas automatizadas: unitarias y de integración simples.
-
