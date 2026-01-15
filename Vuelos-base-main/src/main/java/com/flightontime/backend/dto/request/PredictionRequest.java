@@ -49,7 +49,7 @@ public record PredictionRequest(
         )
         @NotNull(message = "La fecha de partida es obligatoria")
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime fechaPartida,
+        LocalDateTime fecha_Partida,
 
         @Schema(
                 description = "Distancia del vuelo en kilómetros (máximo 7 dígitos enteros, 2 decimales)",
@@ -60,6 +60,6 @@ public record PredictionRequest(
         @NotNull(message = "La distancia es obligatoria")
         @Positive(message = "La distancia debe ser mayor a 0")
         @Digits(integer = 7, fraction = 2, message = "Formato inválido para distancia_km")
-        Double distanciaKm
+        Double distancia_km
 ) {
 }

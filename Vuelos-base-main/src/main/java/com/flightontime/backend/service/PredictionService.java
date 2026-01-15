@@ -88,8 +88,8 @@ public class PredictionService {
             entity.setAerolinea(request.aerolinea().toUpperCase());
             entity.setOrigen(request.origen().toUpperCase());
             entity.setDestino(request.destino().toUpperCase());
-            entity.setFechaPartida(request.fechaPartida());
-            entity.setDistanciaKm(request.distanciaKm().intValue());
+            entity.setFechaPartida(request.fecha_Partida());
+            entity.setDistanciaKm(request.distancia_km().intValue());
             entity.setPrevision(PredictionResult.valueOf(response.prevision().toUpperCase()));
             entity.setProbabilidad(response.probabilidad());
 

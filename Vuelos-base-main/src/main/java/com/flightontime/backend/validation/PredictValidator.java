@@ -32,7 +32,7 @@ public class PredictValidator {
 		validAreoline(normalizedRequest.aerolinea());
 		validAirport(normalizedRequest.origen()); // validation origin airport
 		validAirport(normalizedRequest.destino()); // validation destination airport
-		validateDepartureDateIsNotPast(request.fechaPartida()); //valida fecha futura
+		validateDepartureDateIsNotPast(request.fecha_Partida()); //valida fecha futura
 		validateOriginAndDestinationAreDifferent(normalizedRequest.origen(), normalizedRequest.destino());
 	}
 
@@ -142,8 +142,8 @@ public class PredictValidator {
 
 		return new PredictionRequest(request.aerolinea() != null ? request.aerolinea().toUpperCase() : null,
 				request.origen() != null ? request.origen().toUpperCase() : null,
-				request.destino() != null ? request.destino().toUpperCase() : null, request.fechaPartida(),
-				request.distanciaKm());
+				request.destino() != null ? request.destino().toUpperCase() : null, request.fecha_Partida(),
+				request.distancia_km());
 	}
 
 }
