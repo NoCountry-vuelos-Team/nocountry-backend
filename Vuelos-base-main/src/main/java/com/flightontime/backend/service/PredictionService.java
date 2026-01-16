@@ -90,7 +90,7 @@ public class PredictionService {
             entity.setDestino(request.destino().toUpperCase());
             entity.setFechaPartida(request.fecha_Partida());
             entity.setDistanciaKm(request.distancia_km().intValue());
-            entity.setPrevision(PredictionResult.valueOf(response.prevision().toUpperCase()));
+            entity.setPrevision(mapPrevisionToEnum(response.prevision()));
             entity.setProbabilidad(response.probabilidad());
 
             repository.save(entity);
@@ -99,6 +99,36 @@ public class PredictionService {
 
         } catch (Exception e) {
             log.error("Error al persistir la predicción en la base de datos. La predicción se completó pero no se guardó en historial.", e);
+        }
+    }
+
+    /**
+     * Mapea el string de prevision de la respuesta de Data Science al enum PredictionResult.
+     * Convierte "A TIEMPO" -> PUNTUAL y "RETRASADO" -> RETRASADO
+     */
+    private PredictionResult mapPrevisionToEnum(String prevision) {
+        if (prevision == null) {
+            throw new IllegalArgumentException("La prevision no puede ser null");
+        }
+        
+        String normalizedPrevision = prevision.trim().toUpperCase();
+        
+        // Mapea "A TIEMPO" a PUNTUAL
+        if ("A TIEMPO".equals(normalizedPrevision)) {
+            return PredictionResult.PUNTUAL;
+        }
+        
+        // Mapea "RETRASADO" a RETRASADO
+        if ("RETRASADO".equals(normalizedPrevision)) {
+            return PredictionResult.RETRASADO;
+        }
+        
+        // Si no coincide con ninguno, intenta usar valueOf (por si acaso ya viene en formato del enum)
+        try {
+            return PredictionResult.valueOf(normalizedPrevision.replace(" ", "_"));
+        } catch (IllegalArgumentException e) {
+            log.warn("Valor de prevision no reconocido: '{}'. Usando RETRASADO por defecto.", prevision);
+            return PredictionResult.RETRASADO;
         }
     }
 }

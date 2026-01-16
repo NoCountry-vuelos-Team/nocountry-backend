@@ -27,7 +27,7 @@ public class DataScienceClient {
     public PredictionResponse predictDelay(PredictionRequest request) {
         // Si no está configurada la URL del modelo, devolvemos un mock como en el prototipo original
         if (dataScienceApiUrl == null || dataScienceApiUrl.isBlank()) {
-            return new PredictionResponse("Retrasado", 0.78);
+            return new PredictionResponse("RETRASADO", 0.78);
         }
 
         DataSciencePredictionRequest dsRequest = mapToDsRequest(request);
