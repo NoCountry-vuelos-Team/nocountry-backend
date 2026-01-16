@@ -2,6 +2,7 @@ package com.flightontime.backend.controller;
 
 import com.flightontime.backend.dto.request.PredictionRequest;
 import com.flightontime.backend.dto.response.PredictionResponse;
+import com.flightontime.backend.dto.response.PredictionHistoryItem;
 import com.flightontime.backend.service.PredictionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(
 		name = "Predicción de Vuelos",
@@ -183,5 +186,85 @@ public class PredictionController {
 	) {
 		PredictionResponse response = predictionService.predict(request);
 		return ResponseEntity.ok(response);
+	}
+
+	@Operation(
+			summary = "Obtener historial de predicciones",
+			description = "Retorna el historial completo de todas las predicciones realizadas, ordenado por fecha de creación descendente (más recientes primero)"
+	)
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "Historial obtenido exitosamente",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = PredictionHistoryItem.class),
+							examples = @ExampleObject(
+									name = "Historial con múltiples predicciones",
+									value = """
+                            [
+                              {
+                                "id": 1,
+                                "aerolinea": "AA",
+                                "origen": "SFO",
+                                "destino": "LAX",
+                                "fechaPartida": "2024-01-15T14:30:00",
+                                "distanciaKm": 559,
+                                "prevision": "A TIEMPO",
+                                "probabilidad": 0.85,
+                                "createdAt": "2024-01-15T10:00:00",
+                                "updatedAt": "2024-01-15T10:00:00"
+                              },
+                              {
+                                "id": 2,
+                                "aerolinea": "UA",
+                                "origen": "JFK",
+                                "destino": "LAX",
+                                "fechaPartida": "2024-01-16T08:00:00",
+                                "distanciaKm": 2475,
+                                "prevision": "RETRASADO",
+                                "probabilidad": 0.72,
+                                "createdAt": "2024-01-15T09:30:00",
+                                "updatedAt": "2024-01-15T09:30:00"
+                              }
+                            ]
+                            """
+							)
+					)
+			),
+			@ApiResponse(
+					responseCode = "200",
+					description = "Historial vacío (sin predicciones aún)",
+					content = @Content(
+							mediaType = "application/json",
+							examples = @ExampleObject(
+									name = "Historial vacío",
+									value = "[]"
+							)
+					)
+			),
+			@ApiResponse(
+					responseCode = "500",
+					description = "Error interno del servidor",
+					content = @Content(
+							mediaType = "application/json",
+							examples = @ExampleObject(
+									value = """
+                        {
+                          "timestamp": "2024-01-15T10:30:00",
+                          "status": 500,
+                          "error": "Internal Server Error",
+                          "message": "Error al obtener el historial de predicciones",
+                          "path": "/predict/history"
+                        }
+                        """
+							)
+					)
+			)
+	})
+	@GetMapping("/history")
+	public ResponseEntity<List<PredictionHistoryItem>> getHistory() {
+		List<PredictionHistoryItem> history = predictionService.findAllHistory();
+		return ResponseEntity.ok(history);
 	}
 }

@@ -4,17 +4,21 @@ import com.flightontime.backend.client.DataScienceClient;
 import com.flightontime.backend.persistence.entity.PredictionEntity;
 import com.flightontime.backend.dto.request.PredictionRequest;
 import com.flightontime.backend.dto.response.PredictionResponse;
+import com.flightontime.backend.dto.response.PredictionHistoryItem;
 import com.flightontime.backend.persistence.entity.PredictionResult;
 import com.flightontime.backend.repository.PredictionRepository;
 import com.flightontime.backend.validation.PredictValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -100,6 +104,55 @@ public class PredictionService {
         } catch (Exception e) {
             log.error("Error al persistir la predicción en la base de datos. La predicción se completó pero no se guardó en historial.", e);
         }
+    }
+
+    /**
+     * Obtiene el historial completo de predicciones ordenado por fecha de creación descendente (más recientes primero).
+     * @return Lista de items del historial de predicciones
+     */
+    public List<PredictionHistoryItem> findAllHistory() {
+        log.debug("Obteniendo historial completo de predicciones");
+        
+        List<PredictionEntity> entities = repository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        
+        log.info("Historial obtenido exitosamente. Total de registros: {}", entities.size());
+        
+        return entities.stream()
+                .map(this::mapEntityToHistoryItem)
+                .toList();
+    }
+
+    /**
+     * Mapea una entidad PredictionEntity a un DTO PredictionHistoryItem.
+     */
+    private PredictionHistoryItem mapEntityToHistoryItem(PredictionEntity entity) {
+        return new PredictionHistoryItem(
+                entity.getId(),
+                entity.getAerolinea(),
+                entity.getOrigen(),
+                entity.getDestino(),
+                entity.getFechaPartida(),
+                entity.getDistanciaKm(),
+                mapEnumToPrevision(entity.getPrevision()),
+                entity.getProbabilidad(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt()
+        );
+    }
+
+    /**
+     * Mapea el enum PredictionResult al string de prevision para la respuesta.
+     * Convierte PUNTUAL -> "A TIEMPO" y RETRASADO -> "RETRASADO"
+     */
+    private String mapEnumToPrevision(PredictionResult result) {
+        if (result == null) {
+            return "RETRASADO";
+        }
+        
+        return switch (result) {
+            case PUNTUAL -> "A TIEMPO";
+            case RETRASADO -> "RETRASADO";
+        };
     }
 
     /**
