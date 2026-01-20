@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: flight-on-time-backend
+
+server:
+  port: 8080
