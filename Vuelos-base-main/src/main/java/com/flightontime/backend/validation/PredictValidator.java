@@ -25,8 +25,11 @@ public class PredictValidator {
 	 * Valida el request convirtiendo todos los strings a mayúsculas antes de
 	 * enviarlo al validador. Esto asegura que la validación se haga con los valores
 	 * normalizados.
+	 * 
+	 * @param request el request a validar
+	 * @return el request normalizado a mayúsculas, listo para enviar a la API de Data Science
 	 */
-	public void validation(PredictionRequest request) {
+	public PredictionRequest validation(PredictionRequest request) {
 
 		PredictionRequest normalizedRequest = normalizeToUpperCase(request);
 		validAreoline(normalizedRequest.aerolinea());
@@ -34,6 +37,9 @@ public class PredictValidator {
 		validAirport(normalizedRequest.destino()); // validation destination airport
 		validateDepartureDateIsNotPast(request.fecha_Partida()); //valida fecha futura
 		validateOriginAndDestinationAreDifferent(normalizedRequest.origen(), normalizedRequest.destino());
+		
+		// Retorna el request normalizado para que se envíe a Data Science con datos correctos
+		return normalizedRequest;
 	}
 
 	/**

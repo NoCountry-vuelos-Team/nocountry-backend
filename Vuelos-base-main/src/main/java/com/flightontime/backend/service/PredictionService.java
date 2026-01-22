@@ -36,14 +36,14 @@ public class PredictionService {
                 request.aerolinea(), request.origen(), request.destino());
         
         try {
-            // Validación de datos de entrada
-            predictValidator.validation(request);
-            // Llamada (o mock) al modelo de Data Science
-            PredictionResponse response = dataScienceClient.predictDelay(request);
+            // Validación de datos de entrada - retorna el request normalizado
+            PredictionRequest normalizedRequest = predictValidator.validation(request);
+            // Llamada (o mock) al modelo de Data Science con el request normalizado
+            PredictionResponse response = dataScienceClient.predictDelay(normalizedRequest);
             log.info("Predicción completada exitosamente: prevision={}, probabilidad={}", 
                     response.prevision(), response.probabilidad());
 
-            savePrediction(request, response);
+            savePrediction(normalizedRequest, response);
 
             log.info("Predicción completada exitosamente: prevision={}, probabilidad={}",
                     response.prevision(), response.probabilidad());
